@@ -1,0 +1,46 @@
+-- Creating and selecting the database
+CREATE DATABASE IF NOT EXISTS basel_iii;
+USE basel_iii;
+
+-- Creating the table to store capital ratio datas
+CREATE TABLE bank_capital_ratios (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    bank_name VARCHAR(100) NOT NULL,
+    lei_code VARCHAR(20) NOT NULL,
+    cet1_ratio DECIMAL(5,2) NOT NULL,
+    tier1_ratio DECIMAL(5,2) NOT NULL,
+    leverage_ratio DECIMAL(5,2) NOT NULL,
+    period INT NOT NULL,
+    UNIQUE KEY unique_lei_period (lei_code, period)
+);
+
+-- Displaying all banks with their CET1, Tier1 and Leverage ratios
+-- Ordering CET1 descending to analyze strong and weak banks
+SELECT 
+    bank_name as "Banks",
+    cet1_ratio as "CET1 Ratio (%)",
+    tier1_ratio as "Tier1 Ratio (%)", 
+    leverage_ratio as "Leverage Ratio (%)"
+FROM bank_capital_ratios
+ORDER BY cet1_ratio DESC;
+
+-- Grouping banks based on their CET1 ratio levels
+-- Classifying as Very Strong (>20%), Strong (15-20%), or Normal (10-15%)
+-- Creating the data for the risk distribution pie chart
+SELECT 
+    CASE 
+        WHEN cet1_ratio > 20.0 THEN 'Very Strong (>20%)'
+        WHEN cet1_ratio BETWEEN 15.0 AND 20.0 THEN 'Strong (15-20%)'
+        WHEN cet1_ratio BETWEEN 10.0 AND 15.0 THEN 'Normal (10-15%)'
+        ELSE 'Below Minimum'
+    END as risk_group,
+    COUNT(*) as number_of_banks
+FROM bank_capital_ratios
+GROUP BY risk_group
+ORDER BY 
+    CASE risk_group
+        WHEN 'Very Strong (>20%)' THEN 1
+        WHEN 'Strong (15-20%)' THEN 2
+        WHEN 'Normal (10-15%)' THEN 3
+        ELSE 4
+    END;
